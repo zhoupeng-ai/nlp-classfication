@@ -21,6 +21,7 @@ class ModelExecutor(object):
         self.trainer = trainer
         self.train_data = train_data
         self.evaluate_data = evaluate_data
+        self.is_bert = False
         if isinstance(trainer, BertTrainer):
             self.is_bert = True
 

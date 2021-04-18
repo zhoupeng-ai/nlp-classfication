@@ -36,7 +36,7 @@ data_processor = DataProcessor(root=data_config.root,
 
 model_config = TrainConfig()
 # 可使用model_config.reset_config 自定义模型参数或者直接修改config文件
-model_config.reset_config(my_cuda_is_enable=False, model_name='bert-classification')
+model_config.reset_config(my_cuda_is_enable=False, model_name='word-avg')
 if model_config.model_name is None:
     raise ValueError("Invalid model-name value: {}".format(model_config.model_name))
 
@@ -67,13 +67,14 @@ if model_config.model_name == 'word-avg':
     trainer = ModelTrainer(model=wordavg_model, loss_fn=avg_loss_fn, optimizers=(avg_optim, None))
 
     logger.info("Word Averaging Model")
-    executor = ModelExecutor(model=wordavg_model,
+    executor = ModelExecutor(args=model_config,
+                             model=wordavg_model,
                              trainer=trainer,
                              train_data=train_iter,
                              evaluate_data=val_iter)
     best_acc = executor.execute(model_config.epoch_size)
     logger.info(f'当前模型最优情况下的验证准确率： {best_acc * 100:.2f}%')
-
+    record_train_model(model_name="WordAvgModel", config=model_config, train_result=best_acc)
 elif model_config.model_name == 'attention-word-avg':
     atte_wordavg_model = BasedAttentionWordAvgModel(vocab_size=vocab_size,
                                                     embed_size=model_config.embed_size,
@@ -87,14 +88,14 @@ elif model_config.model_name == 'attention-word-avg':
     atte_avg_optim = torch.optim.Adam(atte_wordavg_model.parameters(), lr=model_config.lr)
     atte_avg_loss_fn = nn.BCEWithLogitsLoss()
 
-    record_train_model(model_name="WordAvgModel", config=model_config, train_result=best_acc)
     # atte_scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer=avg_optim, lr_lambda=poly_lr_scheduler)
     atte_trainer = ModelTrainer(model=atte_wordavg_model,
                                 optimizers=(atte_avg_optim, None),
                                 loss_fn=atte_avg_loss_fn)
 
     logger.info("Based Attention Word Averaging Model")
-    executor = ModelExecutor(model=atte_wordavg_model,
+    executor = ModelExecutor(args=model_config,
+                             model=atte_wordavg_model,
                              trainer=atte_trainer,
                              train_data=train_iter,
                              evaluate_data=val_iter)
@@ -122,7 +123,8 @@ elif model_config.model_name == 'self-attention-word-avg':
     trainer = ModelTrainer(model=selfatte_wordavg_model, loss_fn=avg_loss_fn, optimizers=(avg_optim, None))
 
     logger.info("Based Self-Attention WordAvg Model")
-    executor = ModelExecutor(model=selfatte_wordavg_model,
+    executor = ModelExecutor(args=model_config,
+                             model=selfatte_wordavg_model,
                              trainer=trainer,
                              train_data=train_iter,
                              evaluate_data=val_iter)
